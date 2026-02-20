@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   UseGuards,
   RawBodyRequest,
@@ -36,6 +37,18 @@ export class PostsController {
     @Body() dto: CreatePostDto,
   ) {
     return this.postsService.updateAfterUpload(postId, user.id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async getFeed(
+    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
+  ) {
+    return this.postsService.findFeed(
+      limit ? Math.min(Number(limit), 50) : 50,
+      cursor,
+    );
   }
 
   @UseGuards(JwtAuthGuard)

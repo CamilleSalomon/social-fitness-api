@@ -46,6 +46,23 @@ export class MuxService {
     };
   }
 
+  /** Récupère le statut d’un upload (pour sync sans webhook, ex. en local). */
+  async getUploadStatus(uploadId: string): Promise<{ assetId: string | null; status: string }> {
+    const auth = Buffer.from(`${this.tokenId}:${this.tokenSecret}`).toString('base64');
+    try {
+      const { data } = await axios.get<{ data: { asset_id?: string; status: string } }>(
+        `${MUX_BASE}/video/v1/uploads/${uploadId}`,
+        { headers: { Authorization: `Basic ${auth}` } },
+      );
+      return {
+        assetId: data.data?.asset_id ?? null,
+        status: data.data?.status ?? 'unknown',
+      };
+    } catch {
+      return { assetId: null, status: 'error' };
+    }
+  }
+
   /** Get playback_id from asset (e.g. when webhook does not include it). */
   async getPlaybackIdForAsset(assetId: string): Promise<string | null> {
     const auth = Buffer.from(`${this.tokenId}:${this.tokenSecret}`).toString('base64');
