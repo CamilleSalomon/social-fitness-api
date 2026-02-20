@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+
+  posts    Post[]
+  likes    Like[]
+  comments Comment[]
+  following Follow[] @relation("Following")
+  followers Follow[] @relation("Followers")
+}
+
+model Post {
+  id            String   @id @default(cuid())
+  userId        String
+  caption       String?
+  muxUploadId   String?  // Mux direct upload id
+  muxAssetId    String?
+  muxPlaybackId String?
+  status        String   @default("uploading") // uploading | processing | ready | failed
+  durationSec   Int?
+  createdAt     DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes    Like[]
+  comments Comment[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Like {
+  userId String
+  postId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Follow {
+  followerId  String
+  followedId  String
+
+  follower User @relation("Followers", fields: [followerId], references: [id], onDelete: Cascade)
+  followed User @relation("Following", fields: [followedId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followedId])
+}
